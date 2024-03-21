@@ -15,6 +15,9 @@
 #include "proc.h"
 #include "x86.h"
 
+
+
+
 static void consputc(int);
 
 static int panicked = 0;
@@ -126,6 +129,9 @@ panic(char *s)
 #define CRTPORT 0x3d4
 static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
+
+static int historyColorFlag = 0;
+
 static void
 cgaputc(int c)
 {
@@ -141,8 +147,14 @@ cgaputc(int c)
 		pos += 80 - pos%80;
 	else if(c == BACKSPACE){
 		if(pos > 0) --pos;
-	} else
-		crt[pos++] = (c&0xff) | 0x0700;  // black on white
+	} else{
+
+		if(historyColorFlag == 1) crt[pos++] = (c&0xff) | 0x0200;
+		else crt[pos++] = (c&0xff) | 0x0700;  // black on white
+
+		historyColorFlag = 0;
+	}
+
 
 	if(pos < 0 || pos > 25*80)
 		panic("pos under/overflow");
@@ -186,6 +198,42 @@ struct {
 
 #define C(x)  ((x)-'@')  // Control-x
 
+
+
+static int history_index = 0;
+static char command_history1[INPUT_BUF];
+static char command_history2[INPUT_BUF];
+static char command_history3[INPUT_BUF];
+static int brojacHistory1 = 0;
+static int brojacHistory2 = 0;
+static int brojacHistory3 = 0;
+
+
+void historyChange(){
+	memset(command_history3, 0, sizeof(command_history3));
+	for(int i = 0; i < brojacHistory2;++i){
+		command_history3[i] = command_history2[i];
+	}
+	brojacHistory3 = brojacHistory2;
+	command_history3[brojacHistory3] = '\0';
+
+
+
+
+	memset(command_history2, 0, sizeof(command_history2));
+	for(int i = 0; i < brojacHistory1;++i){
+		command_history2[i] = command_history1[i];
+	}
+	brojacHistory2 = brojacHistory1;
+	command_history2[brojacHistory2] = '\0';
+
+	history_index = 0;
+
+
+}
+
+static int editWriteDiff = 0;
+
 void
 consoleintr(int (*getc)(void))
 {
@@ -211,13 +259,91 @@ consoleintr(int (*getc)(void))
 				consputc(BACKSPACE);
 			}
 			break;
+		case 0xFF:
+			history_index++;
+			if(brojacHistory1 == 0) history_index = 0;
+			else if(brojacHistory2 == 0) history_index = 1;
+			else if(brojacHistory3 == 0) history_index = 2;
+			else if(history_index > 3) history_index = 3;
+
+			while(input.e != input.w &&
+			      input.buf[(input.e-1) % INPUT_BUF] != '\n'){
+				input.e--;
+				consputc(BACKSPACE);
+			}
+
+			if(history_index == 1){
+				for(int i = 0; i < brojacHistory1;++i){
+					input.buf[input.e++ % INPUT_BUF] = command_history1[i];
+					historyColorFlag = 1;
+					consputc(command_history1[i]);
+				}
+			}
+			else if(history_index == 2 && brojacHistory2 != 0){
+				for(int i = 0; i < brojacHistory2;++i){
+					input.buf[input.e++ % INPUT_BUF] = command_history2[i];
+					historyColorFlag = 1;
+					consputc(command_history2[i]);
+				}
+			}
+			else if(history_index == 3 && brojacHistory3 != 0){
+				for(int i = 0; i < brojacHistory3;++i){
+					input.buf[input.e++ % INPUT_BUF] = command_history3[i];
+					historyColorFlag = 1;
+					consputc(command_history3[i]);
+				}
+			}
+			break;
+		case 0xFE:
+			if(history_index == 0) break;
+			else history_index--;
+
+			while(input.e != input.w &&
+				input.buf[(input.e-1) % INPUT_BUF] != '\n'){
+				input.e--;
+				consputc(BACKSPACE);
+			}
+
+
+			if(history_index == 1){
+				for(int i = 0; i < brojacHistory1;++i){
+					input.buf[input.e++ % INPUT_BUF] = command_history1[i];
+					historyColorFlag = 1;
+					consputc(command_history1[i]);
+				}
+			}
+			else if(history_index == 2){
+				for(int i = 0; i < brojacHistory2;++i){
+					input.buf[input.e++ % INPUT_BUF] = command_history2[i];
+					historyColorFlag = 1;
+					consputc(command_history2[i]);
+				}
+			}
+			break;
 		default:
 			if(c != 0 && input.e-input.r < INPUT_BUF){
 				c = (c == '\r') ? '\n' : c;
 				input.buf[input.e++ % INPUT_BUF] = c;
 				consputc(c);
 				if(c == '\n' || c == C('D') || input.e == input.r+INPUT_BUF){
+					editWriteDiff = input.e - input.w;
 					input.w = input.e;
+
+					int i = input.r;
+
+					if(editWriteDiff != 1){
+						historyChange();
+						memset(command_history1, 0, sizeof(command_history1));
+						brojacHistory1 = 0;
+						command_history1[brojacHistory1] = '\0';
+
+						while(i < input.w - 1){
+							command_history1[brojacHistory1] = input.buf[i];
+							brojacHistory1++;
+							i++;
+						}
+						command_history1[brojacHistory1] = '\0';
+					}
 					wakeup(&input.r);
 				}
 			}
