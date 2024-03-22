@@ -261,10 +261,13 @@ consoleintr(int (*getc)(void))
 			break;
 		case 0xFF:
 			history_index++;
-			if(brojacHistory1 == 0) history_index = 0;
-			else if(brojacHistory2 == 0) history_index = 1;
-			else if(brojacHistory3 == 0) history_index = 2;
+			//cgaputc(history_index+'0');
+			if(brojacHistory1 == 0 && history_index == 1) history_index = 0;
+			else if(brojacHistory2 == 0 && history_index == 2) history_index = 1;
+			else if(brojacHistory3 == 0 && history_index == 3) history_index = 2;
 			else if(history_index > 3) history_index = 3;
+
+			//cgaputc(history_index+'0');
 
 			while(input.e != input.w &&
 			      input.buf[(input.e-1) % INPUT_BUF] != '\n'){
