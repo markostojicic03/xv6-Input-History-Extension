@@ -212,6 +212,7 @@ static int brojacHistory3 = 0;
 void historyChange(){
 	memset(command_history3, 0, sizeof(command_history3));
 	for(int i = 0; i < brojacHistory2;++i){
+		if(i == 126) break;
 		command_history3[i] = command_history2[i];
 	}
 	brojacHistory3 = brojacHistory2;
@@ -222,6 +223,7 @@ void historyChange(){
 
 	memset(command_history2, 0, sizeof(command_history2));
 	for(int i = 0; i < brojacHistory1;++i){
+		if(i == 126) break;
 		command_history2[i] = command_history1[i];
 	}
 	brojacHistory2 = brojacHistory1;
@@ -276,21 +278,21 @@ consoleintr(int (*getc)(void))
 			}
 
 			if(history_index == 1){
-				for(int i = 0; i < brojacHistory1;++i){
+				for(int i = 0; i < brojacHistory1 % INPUT_BUF;++i){
 					input.buf[input.e++ % INPUT_BUF] = command_history1[i];
 					historyColorFlag = 1;
 					consputc(command_history1[i]);
 				}
 			}
 			else if(history_index == 2 && brojacHistory2 != 0){
-				for(int i = 0; i < brojacHistory2;++i){
+				for(int i = 0; i < brojacHistory2 % INPUT_BUF;++i){
 					input.buf[input.e++ % INPUT_BUF] = command_history2[i];
 					historyColorFlag = 1;
 					consputc(command_history2[i]);
 				}
 			}
 			else if(history_index == 3 && brojacHistory3 != 0){
-				for(int i = 0; i < brojacHistory3;++i){
+				for(int i = 0; i < brojacHistory3 % INPUT_BUF;++i){
 					input.buf[input.e++ % INPUT_BUF] = command_history3[i];
 					historyColorFlag = 1;
 					consputc(command_history3[i]);
@@ -309,14 +311,14 @@ consoleintr(int (*getc)(void))
 
 
 			if(history_index == 1){
-				for(int i = 0; i < brojacHistory1;++i){
+				for(int i = 0; i < brojacHistory1 % INPUT_BUF;++i){
 					input.buf[input.e++ % INPUT_BUF] = command_history1[i];
 					historyColorFlag = 1;
 					consputc(command_history1[i]);
 				}
 			}
 			else if(history_index == 2){
-				for(int i = 0; i < brojacHistory2;++i){
+				for(int i = 0; i < brojacHistory2 % INPUT_BUF;++i){
 					input.buf[input.e++ % INPUT_BUF] = command_history2[i];
 					historyColorFlag = 1;
 					consputc(command_history2[i]);
@@ -341,7 +343,8 @@ consoleintr(int (*getc)(void))
 						command_history1[brojacHistory1] = '\0';
 
 						while(i < input.w - 1){
-							command_history1[brojacHistory1] = input.buf[i];
+							if(brojacHistory1 == 126) break;
+							command_history1[brojacHistory1 % INPUT_BUF] = input.buf[i];
 							brojacHistory1++;
 							i++;
 						}
