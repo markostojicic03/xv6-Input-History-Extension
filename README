@@ -1,49 +1,45 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/iUiyMWYQ)
-xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
-Version 6 (v6).  xv6 loosely follows the structure and style of v6,
-but is implemented for a modern x86-based multiprocessor using ANSI C.
+# xv6 Input History Extension
 
-ACKNOWLEDGMENTS
+## Project Overview
+This project involves modifying the xv6 operating system to support an input history feature within the shell. The primary goal is to allow users to browse, edit, and re-execute previously entered commands, enhancing the overall usability of the xv6 command-line interface.
 
-xv6 is inspired by John Lions's Commentary on UNIX 6th Edition (Peer
-to Peer Communications; ISBN: 1-57398-013-7; 1st edition (June 14,
-2000)). See also https://pdos.csail.mit.edu/6.828/, which
-provides pointers to on-line resources for v6.
+The implementation ensures that the new functionality is integrated seamlessly without disrupting the core stability or performance of the original operating system.
 
-xv6 borrows code from the following sources:
-    JOS (asm.h, elf.h, mmu.h, bootasm.S, ide.c, console.c, and others)
-    Plan 9 (entryother.S, mp.h, mp.c, lapic.c)
-    FreeBSD (ioapic.c)
-    NetBSD (console.c)
+---
 
-The following people have made contributions: Russ Cox (context switching,
-locking), Cliff Frey (MP), Xiao Yu (MP), Nickolai Zeldovich, and Austin
-Clements.
+## Features
 
-We are also grateful for the bug reports and patches contributed by Silas
-Boyd-Wickizer, Anton Burtsev, Cody Cutler, Mike CAT, Tej Chajed, eyalz800,
-Nelson Elhage, Saar Ettinger, Alice Ferrazzi, Nathaniel Filardo, Peter
-Froehlich, Yakir Goaron,Shivam Handa, Bryan Henry, Jim Huang, Alexander
-Kapshuk, Anders Kaseorg, kehao95, Wolfgang Keller, Eddie Kohler, Austin
-Liew, Imbar Marinescu, Yandong Mao, Matan Shabtay, Hitoshi Mitake, Carmi
-Merimovich, Mark Morrissey, mtasm, Joel Nider, Greg Price, Ayan Shafqat,
-Eldar Sehayek, Yongming Shen, Cam Tenny, tyfkda, Rafael Ubal, Warren
-Toomey, Stephen Tu, Pablo Ventura, Xi Wang, Keiichi Watanabe, Nicolas
-Wolovick, wxdao, Grant Wu, Jindong Zhang, Icenowy Zheng, and Zou Chang Wei.
+### 1. Command History Storage
+* The system captures and stores previously entered commands in a dedicated buffer.
+* Empty commands are automatically filtered out and are not saved to the history to maintain a clean record.
 
-The code in the files that constitute xv6 is
-Copyright 2006-2018 Frans Kaashoek, Robert Morris, and Russ Cox.
+### 2. Navigation and Visualization
+* Users can navigate through the history using keyboard shortcuts (Shift + Arrow Up for older commands and Shift + Arrow Down for more recent commands).
+* History entries are visually distinguished by being printed in green color.
+* If a user exits the history navigation by scrolling past the most recent entry, the terminal correctly handles the restoration or clearing of the current input line.
 
-ERROR REPORTS
+### 3. Command Re-execution and Editing
+* Commands retrieved from the history can be executed immediately by pressing Enter.
+* The system supports appending additional characters to a command retrieved from history. Any newly typed characters are displayed in white, maintaining a clear distinction between the historical command and the new input.
 
-We switched our focus to xv6 on RISC-V; see the mit-pdos/xv6-riscv.git
-repository on github.com.
+---
 
-BUILDING AND RUNNING XV6
+## Technical Implementation
+The modification required changes to the console and shell components of the xv6 kernel:
 
-To build xv6 on an x86 ELF machine (like Linux or FreeBSD), run
-"make". On non-x86 or non-ELF machines (like OS X, even on x86), you
-will need to install a cross-compiler gcc suite capable of producing
-x86 ELF binaries (see https://pdos.csail.mit.edu/6.828/).
-Then run "make TOOLPREFIX=i386-jos-elf-". Now install the QEMU PC
-simulator and run "make qemu".
+* Input Buffer Management: Logic was added to handle the circular or linear storage of command strings.
+* Keyboard Interrupt Handling: Custom logic was implemented to intercept specific key combinations (Shift + Arrows) for history navigation.
+* Console Output: The console driver was modified to support color-coded output for history entries.
+
+---
+
+## Build and Execution
+This project is managed and submitted via GitHub Classroom.
+
+1. Clone the repository containing the modified xv6 source code.
+2. Compile the operating system using the provided Makefile:
+   make qemu
+3. Once the xv6 shell is active, type several commands and use Shift + Up/Down arrows to test the history functionality.
+
+---
+Developed as a project for the Operating Systems course.
